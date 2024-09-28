@@ -70,14 +70,6 @@ app.use('/api',warehouse);
 app.use('/api',contactForm);
 app.use('/api', hubRoutes);
 app.use('/api', uploadRoutes);
-app.post('/api/fedex-rate', async (req, res) => {
-  try {
-    const rate = await fedexService.getFedExRate(req.body);
-    res.json(rate);
-  } catch (error) {
-    res.status(500).send('Error retrieving FedEx rate');
-  }
-});
 
  app.get('/',(req,res)=>{
   res.send('welcome')
