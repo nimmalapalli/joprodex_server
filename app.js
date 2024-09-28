@@ -20,7 +20,7 @@ const port = process.env.PORT || 8000;
 const nimbus =require('./routes/nimbuspost.js')
 const fedex =require('./routes/fedex.js')
 const warehouse=require('./routes/warehouse.route.js');
-const contactForm = require('../github_codes/routes/staticwebsiteRoutes/contact.route.js')
+const contactForm = require('./routes/staticwebsiteRoutes/contact.route.js')
 
 const hubRoutes=require('./routes/hubRoutes.js')
 
