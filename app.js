@@ -10,9 +10,7 @@ const authRoute = require('./routes/auth.route');
 const router = require('./routes/router');
 
 const shipmentRoute = require('./routes/shipmentRoute');
-const paymentRoute = require('./routes/paymentRoute');
-
-     
+const paymentRoute = require('./routes/paymentRoute');     
 const bodyParser = require('body-parser');
 
 const fileUpload = require('express-fileupload');
