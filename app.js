@@ -26,7 +26,7 @@ const hubRoutes=require('./routes/hubRoutes.js')
 
 const uploadRoutes= require('./routes/upload.route.js')
 
-const uri = `mongodb+srv://snvitsolutions5:Tj0BzwIs3f7Lb6xO@cluster0.2smu8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+const uri =  `mongodb+srv://snvitsolutions5:4CNhVx3Lp9rZ0NS8@cluster0.2smu8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0&ssl=true`
 
 // `mongodb://localhost:27017`
 
