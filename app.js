@@ -32,7 +32,7 @@ const uri =  `mongodb+srv://snvitsolutions5:4CNhVx3Lp9rZ0NS8@cluster0.2smu8.mong
 
 mongoose.connect(uri, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+
   });
 const db = mongoose.connection;
 db.on('error', (error) => {
