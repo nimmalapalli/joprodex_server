@@ -132,7 +132,7 @@ router.post('/forgot-password', async (req, res) => {
             }
         });
 
-        const resetUrl = `http://localhost:4200/reset-password/${resetToken}`;
+        const resetUrl = `https://mentorexpress.in/reset-password/${resetToken}`;
 
         const mailOptions = {
             to: user.email,
@@ -181,6 +181,31 @@ router.post('/reset-password/:token', async (req, res) => {
     }
 });
 
+router.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+  
+    try {
+      const user = await User.findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: Date.now() }
+      });
+  
+      if (!user) {
+        return res.status(400).json({ message: 'Token is invalid or has expired' });
+      }
+  
+      // Hash the new password and save it
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+  
+      res.status(200).json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Something went wrong', error });
+    }
+  });
 //admin
 
 // Route to get all users (Admin-only)
