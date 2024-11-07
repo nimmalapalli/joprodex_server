@@ -4,6 +4,7 @@ const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const User = require('../models/user');
+var cors = require('cors')
 const razorpayInstance = new Razorpay({
   key_id: 'rzp_live_c9gjRSnJZSE8xC', // Replace with your key_id
   key_secret: 'DO23BYZWVIFUpmmeMTXrKC2J' // Replace with your key_secret
@@ -11,7 +12,7 @@ const razorpayInstance = new Razorpay({
 
 
 
-router.post('/create-order', async (req, res) => {
+router.post('/create-order',cors(), async (req, res) => {
     const { amount, currency, receipt } = req.body;
   
     // Validate amount to ensure it's at least 200
@@ -35,7 +36,7 @@ router.post('/create-order', async (req, res) => {
   });
   
   // Verify Payment Signature and Update Wallet
-  router.post('/verify-payment', async (req, res) => {
+  router.post('/verify-payment',cors(), async (req, res) => {
     const { order_id, payment_id, signature, user_id, amount } = req.body;
   
     // Generate expected signature using Razorpay secret
@@ -70,7 +71,7 @@ router.post('/create-order', async (req, res) => {
   
 
 // Get User Wallet
-router.get('/wallet/:userId', async (req, res) => {
+router.get('/wallet/:userId',cors(), async (req, res) => {
   const { userId } = req.params;
   try {
       const user = await User.findById(userId);
@@ -88,7 +89,7 @@ router.get('/wallet/:userId', async (req, res) => {
 });
 
 // Make a Payment (Debit Wallet)
-router.post('/make-payment', async (req, res) => {
+router.post('/make-payment',cors(), async (req, res) => {
   const { userId, amount, description } = req.body;
 
   try {

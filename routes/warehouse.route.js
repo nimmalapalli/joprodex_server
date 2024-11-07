@@ -4,10 +4,10 @@ const Warehouse = require('../models/warehouse.model');
 const User =require('../models/user')
 // Create a new warehouse
 router.post('/create', async (req, res) => {
-  const { name, location, capacity ,type,user_id} = req.body;
+  const { name,ownerName,mobile,Address,pincode, state ,type,user_id} = req.body;
 
   try {
-    const newWarehouse = new Warehouse({ name, location, capacity,type ,user_id});
+    const newWarehouse = new Warehouse({ name,ownerName,mobile,Address,pincode, state ,type,user_id});
     await newWarehouse.save();
     res.status(201).json(newWarehouse);
   } catch (error) {
@@ -16,7 +16,7 @@ router.post('/create', async (req, res) => {
 });
 
 // Get all warehouses
-router.get('/', async (req, res) => {
+router.get('/getwarehouses', async (req, res) => {
   try {
     const warehouses = await Warehouse.aggregate([
             

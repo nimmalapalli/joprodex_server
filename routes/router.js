@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Crud = require('../models/order');
-const User = require('../models/user')
+const User = require('../models/user');
+var cors = require('cors')
 
-router.post('/createorder', (req, res, next) => {
+router.post('/createorder', cors(),(req, res, next) => {
     try {
     const newcrud = new Crud({  
  //orderDetails
@@ -27,10 +28,15 @@ router.post('/createorder', (req, res, next) => {
     payment:req.body.payment,
     product:req.body.product,
     phone:req.body.phone,
-    weight:req.body.weight,
+    actualweight:req.body.actualweight,
     length:req.body.length,
     width:req.body.width,
     height:req.body.height,
+    volumetric_weight:req.body.volumetric_weight,
+    bill_location:req.body.bill_location,
+    bill_pincode:req.body.bill_pincode,
+    bill_city :req.body.bill_city,
+    bill_state:req.body.bill_state,
       orderStatus: req.body.orderStatus || 'Ship'
 
     })
@@ -45,7 +51,7 @@ router.post('/createorder', (req, res, next) => {
 });
 
 
-router.get('/read/', async (req, res, next) => {
+router.get('/read/',cors(), async (req, res, next) => {
 
     try {
         const cruds = await Crud
@@ -69,7 +75,7 @@ router.get('/read/', async (req, res, next) => {
 })
 
 
-router.get('/order/:id', async (req, res) => {
+router.get('/order/:id',cors(), async (req, res) => {
   try {
       const order = await Crud.findById(req.params.id); // Fetch a single order by ID
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
@@ -79,7 +85,7 @@ router.get('/order/:id', async (req, res) => {
   }
 });
 // Update Order by ID
-router.put('/order/:id', async (req, res) => {
+router.put('/order/:id',cors(), async (req, res) => {
   try {
       const updatedOrder = await Crud.findByIdAndUpdate(
           req.params.id,
@@ -95,7 +101,7 @@ router.put('/order/:id', async (req, res) => {
 
   
 // Delete Order by ID
-router.delete('/order/:id', async (req, res) => {
+router.delete('/order/:id',cors(), async (req, res) => {
   try {
       const deletedOrder = await Order.findByIdAndDelete(req.params.id);
       if (!deletedOrder) return res.status(404).json({ success: false, message: 'Order not found' });
@@ -103,6 +109,15 @@ router.delete('/order/:id', async (req, res) => {
   } catch (err) {
       res.status(500).json({ success: false, message: 'Failed to delete order', error: err.message });
   }
+});
+// Get total order count
+router.get('/order/count', cors(), async (req, res) => {
+    try {
+        const orderCount = await Crud.countDocuments();
+        res.json({ count: orderCount, success: true, message: 'Total order count retrieved successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to retrieve order count', error: err.message });
+    }
 });
 
 

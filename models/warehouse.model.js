@@ -6,12 +6,20 @@ const warehouseSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  location: {
+  ownerName: {
     type: String,
     required: true
   },
-  capacity: {
+  Address: {
+    type: String,
+    required: true
+  },
+  pincode: {
     type: Number,
+    required: true
+  },
+  state: {
+    type: String,
     required: true
   },
   type:{
@@ -27,5 +35,6 @@ const warehouseSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
 
 module.exports = mongoose.model('Warehouse', warehouseSchema);

@@ -23,10 +23,16 @@ const orderSchema = new Schema({
     payment:{type:Number},
     product:{type:String},
     phone:{type:String},
-    weight:{type:String},
+    actualweight:{type:String},
     length:{type:String},
     width:{type:String},
     height:{type:String},
+    volumetric_weight:{type:String},
+    volumetric_weight:{type:String},
+    bill_location:{type:String},
+    bill_pincode:{type:String},
+    bill_city :{type:String},
+    bill_state:{type:String},
     orderStatus: { 
         type: String, 
         enum: ['Booked', 'Ship', 'Cancelled'],  // Restrict status values

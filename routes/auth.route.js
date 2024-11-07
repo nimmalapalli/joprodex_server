@@ -6,68 +6,136 @@ const checkAuth = require('../middleware/check-auth');
 const Nav=require('../models/navmodel');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+var cors = require('cors');
+const Otp = require('../models/Otp');
 
-const {checkAdmin } = require('../middleware/check-admin'); 
 
-router.post('/register', async (req, res) => {
+router.post('/register', cors(),async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        // Only allow super admin to set roles
-        // const role = req.body.role && req.user.role === 'superAdmin' ? req.body.role : 'user';
-       
+
+  
         const user = new User({
-            
             name: req.body.name,
             email: req.body.email,
             mobile: req.body.mobile,
             password: hashedPassword,
             companyname: req.body.companyname,
-            // role: role,
-            // acceptTerms :req.body.acceptTerms
+            state:req.body.state,
+            role: req.body.role, // Set role here
+            acceptTerms: req.body.acceptTerms
         });
 
-        // if (!acceptTerms) {
+        
+        // Validate terms and conditions acceptance if needed
+        // if (!req.body.acceptTerms) {
         //     return res.json({ success: false, message: 'You must accept the terms and conditions.' });
-        //   }
+        // }
+          // Check if the user has a verified OTP
+    // const otpRecord = await Otp.findOne({ email });
+    // if (!otpRecord) {
+    //   return res.status(400).json({ success: false, message: 'Please verify your email first.' });
+    // }
+    // await Otp.deleteOne({ email });
+
 
         await user.save();
         res.json({ success: true, message: 'ACCOUNT CREATED SUCCESSFULLY' });
     } catch (err) {
-        if (err.code === 11000) {
+        if (err.code === 11000) { // Handle duplicate email error
             return res.json({ success: false, message: 'Email Already Exists' });
         }
         console.error(err);
-        res.json({ success: false, message: 'Authentication failed' });
+        res.json({ success: false, message: 'Registration failed' });
     }
 });
 
 
-router.post('/login',(req,res)=>{
-    
-    User.find({email:req.body.email}).exec().then((result)=>{
-        if(result.length<1){
-         return res.json({success:false,message:'User not found'})
-        }
-        const user = result[0];
-        bcrypt.compare(req.body.password,user.password,(err,ret)=>{
-            if(ret){
-                const payload={
-                  userId:user._id,
-                
-                }
-                const token=jwt.sign(payload,"webBatch")
-                return res.json({success:true,token:token,message:"login successfully"})
-               
-            }else{
-                return res.json({success:false,message:"login failed"})
+router.post('/access/login', cors(), (req, res) => {
+    User.findOne({ email: req.body.email }).exec()
+        .then((user) => {
+            if (!user) {
+                return res.json({ success: false, message: 'User not found' });
             }
-        })
-    }).catch(err=>{
-        res.json({success:false,message:'Authentication failed'})
-    })
-});
 
-router.get('/profile',checkAuth,(req,res)=>{
+            bcrypt.compare(req.body.password, user.password, (err, isMatch) => {
+                if (isMatch) {
+                    const payload = {
+                        userId: user._id,
+                        role: user.role // Include the user's role in the token payload
+                    };
+
+                    const token = jwt.sign(payload, "webBatch", { expiresIn: '1h' }); // Optionally set token expiration
+                    return res.json({ success: true, token: token, message: "Login successfully" });
+                } else {
+                    return res.json({ success: false, message: "Login failed" });
+                }
+            });
+        })
+        .catch(err => {
+            res.json({ success: false, message: 'Authentication failed' });
+        });
+});
+//otp
+// Nodemailer configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'nimmalapallinarendra@gmail.com',
+      pass: 'qraf sqaq jxvo riou'
+    }
+  });
+  
+  // Route to generate and send OTP
+  router.post('/send-otp', async (req, res) => {
+    try {
+      const { email } = req.body;
+  
+      // Generate a random 6-digit OTP
+      const otp = crypto.randomInt(100000, 999999).toString();
+  
+      // Store OTP in MongoDB with expiration
+      await Otp.create({ email, otp });
+  
+      // Send OTP to user's email
+      const mailOptions = {
+        from: 'nimmalapallinarendra@gmail.com',
+        to: email,
+        subject: 'Your OTP Code',
+        text: `Your OTP code is ${otp}`
+      };
+  
+      await transporter.sendMail(mailOptions);
+  
+      res.json({ success: true, message: 'OTP sent to your email' });
+    } catch (err) {
+      console.error('Error sending OTP:', err);
+      res.status(500).json({ success: false, message: 'Error sending OTP' });
+    }
+  });
+  
+
+  
+  // Route to verify OTP
+  router.post('/verify-otp', async (req, res) => {
+    const { email, otp } = req.body;
+  
+    try {
+      // Find OTP in the database and check if it's valid
+      const record = await Otp.findOne({ email, otp });
+      if (record) {
+        await Otp.deleteOne({ email }); // Clear OTP after successful verification
+        res.json({ success: true, message: 'Email verified' });
+      } else {
+        res.json({ success: false, message: 'Invalid or expired OTP' });
+      }
+    } catch (err) {
+      console.error('Error verifying OTP:', err);
+      res.status(500).json({ success: false, message: 'Error verifying OTP' });
+    }
+  });
+
+router.get('/profile',cors(),checkAuth,(req,res)=>{
     const userId=req.userData.userId;
 User.findById(userId)
 .exec()
@@ -79,7 +147,53 @@ User.findById(userId)
   
 });
 
-router.put('/update/:id', async (req, res) => {
+router.get('/users', cors(), async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json({ success: true, data: users });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+router.delete('/user/:id', cors(), async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findByIdAndDelete(userId);
+
+        if (!user) {
+            return res.json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: 'Failed to delete user' });
+    }
+});
+router.patch('/user/block/:id', cors(), async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { blocked: true },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'User blocked successfully' });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: 'Failed to block user' });
+    }
+});
+
+
+router.put('/update/:id',cors(), async (req, res) => {
     try {
         const userId = req.params.id;
         const updateData = req.body;
@@ -105,7 +219,7 @@ router.put('/update/:id', async (req, res) => {
 
 
 // Forgot Password route
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password',cors(), async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -132,7 +246,9 @@ router.post('/forgot-password', async (req, res) => {
             }
         });
 
-        const resetUrl = `https://mentorexpress.in/reset-password/${resetToken}`;
+        const resetUrl = `http://localhost:4200/reset-password/${resetToken}`;
+
+
 
         const mailOptions = {
             to: user.email,
@@ -152,7 +268,7 @@ router.post('/forgot-password', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
     }
 });
-router.post('/reset-password/:token', async (req, res) => {
+router.post('/reset-password/:token',cors(), async (req, res) => {
     try {
         const { token } = req.params;
         const { password } = req.body;
@@ -180,7 +296,6 @@ router.post('/reset-password/:token', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
     }
 });
-
 router.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
   
@@ -208,55 +323,7 @@ router.post('/reset-password', async (req, res) => {
   });
 //admin
 
-// Route to get all users (Admin-only)
-router.get('/admin/users', checkAuth, checkAdmin, async (req, res) => {
-    try {
-        const users = await User.find();
-        res.json({ success: true, data: users });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Route to update a user's role (Admin-only)
-router.patch('/admin/users/:id', checkAuth, checkAdmin, async (req, res) => {
-    const userId = req.params.id;
-    const { role } = req.body; // Expect role to be provided in request body
-
-    // Validate role
-    if (!['user', 'admin', 'superAdmin'].includes(role)) {
-        return res.status(400).json({ success: false, message: 'Invalid role' });
-    }
-
-    try {
-        const user = await User.findByIdAndUpdate(userId, { role: role }, { new: true });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        res.json({ success: true, message: 'User role updated', data: user });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Route to delete a user (Admin-only)
-router.delete('/admin/users/:id', checkAuth, checkAdmin, async (req, res) => {
-    const userId = req.params.id;
-
-    try {
-        const user = await User.findByIdAndDelete(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        res.json({ success: true, message: 'User deleted successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-router.get('/allUser', async (req, res, next) => {
+router.get('/allUser',cors(), async (req, res, next) => {
     try {
         const user = await User.find({});
         res.status(200).json({ data: user, message: 'Authentication login successfully' });
@@ -265,7 +332,7 @@ router.get('/allUser', async (req, res, next) => {
         res.status(500).json({ error: err.message });
     }
 });
-router.post('/createNav',(req,res)=>{
+router.post('/createNav',cors(),(req,res)=>{
     const nav= new Nav({
         navlist1:req.body.navlist1,
         navlist2:req.body.navlist2,

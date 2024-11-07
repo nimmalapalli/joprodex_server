@@ -7,8 +7,10 @@ const userSchema = new Schema({
     mobile:{type:Number,required:true},
     password:{type:String,required:true},
     companyname:{type:String,required:true},
-    // role: { type: String, enum: ['user', 'admin', 'superAdmin'], default: 'user' },
-    // acceptTerms: { type: Boolean, required: true },
+    state:{type:String,required:true, default: 'AndhraPradesh'},
+    role: { type: String, enum: ['user', 'admin', 'superAdmin'], default: 'user' },
+    blocked: { type: Boolean, default: false },
+    acceptTerms: { type: Boolean, required: true },
     wallet: {
         type: walletSchema, // Embed the wallet schema within the user model
         default: {
@@ -16,8 +18,8 @@ const userSchema = new Schema({
           transactions: []
         }
       }
-    
-   
+  
 });
+
 
 module.exports = mongoose.model('user',userSchema);
