@@ -16,9 +16,9 @@ router.post('/create-order',cors(), async (req, res) => {
     const { amount, currency, receipt } = req.body;
   
     // Validate amount to ensure it's at least 200
-    if (amount < 200) {
-      return res.status(400).json({ message: 'Amount must be at least 200' });
-    }
+    // if (amount < 200) {
+    //   return res.status(400).json({ message: 'Amount must be at least 200' });
+    // }
   
     const options = {
       amount: amount * 100, // Amount in paise (Razorpay expects amount in the smallest currency unit)
