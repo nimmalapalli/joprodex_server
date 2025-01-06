@@ -246,7 +246,7 @@ router.post('/forgot-password',cors(), async (req, res) => {
             }
         });
 
-        const resetUrl = `http://localhost:4200/reset-password/${resetToken}`;
+        const resetUrl = `https://mentorexpress.in/reset-password/${resetToken}`;
 
 
 
